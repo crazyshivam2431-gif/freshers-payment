@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Freshers Payment Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=20261007-2" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">College Event Records</p>
+          <h1>FRESHERS PAYMENT DASHBOARD</h1>
+        </div>
+        <div class="sheet-connection">
+          <label for="sheetEndpoint">Google Sheets endpoint</label>
+          <div class="connection-controls">
+            <input id="sheetEndpoint" type="url" placeholder="Paste deployed Apps Script URL (optional)" />
+            <button id="saveSheetEndpoint" class="secondary-btn" type="button">Connect</button>
+          </div>
+          <span id="connectionStatus" role="status">Local storage only</span>
+        </div>
+      </header>
+
+      <section class="stats-grid" id="statsGrid"></section>
+
+      <section class="table-panel">
+        <div class="toolbar">
+          <div class="search-wrap">
+            <label for="searchInput">Search</label>
+            <input id="searchInput" type="text" placeholder="Name, mobile, enrollment..." />
+            <span class="field-hint">Click a student name or choose Enter / Update to open their payment form.</span>
+          </div>
+          <div class="filter-wrap">
+            <label for="statusFilter">Filter</label>
+            <select id="statusFilter">
+              <option value="all">All</option>
+              <option value="Paid">Paid</option>
+              <option value="Unpaid">Unpaid</option>
+              <option value="Pending Verification">Pending Verification</option>
+              <option value="Cash">Cash</option>
+              <option value="Online">Online</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Student Name</th>
+                <th>Mobile</th>
+                <th>Enrollment</th>
+                <th>Payment Status</th>
+                <th>Amount</th>
+                <th>Payment Details</th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div id="paymentModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
+      <div class="modal-backdrop" data-close="true"></div>
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Student Payment</p>
+            <h2 id="paymentModalTitle">Payment Entry</h2>
+            <p id="paymentStudentPrompt" class="modal-prompt">Complete or update payment details for this student.</p>
+          </div>
+          <button class="icon-btn" type="button" data-close="true" aria-label="Close">×</button>
+        </div>
+
+        <form id="paymentForm">
+          <div class="form-grid">
+            <div class="field">
+              <label>Name</label>
+              <input id="studentName" type="text" readonly />
+            </div>
+            <div class="field">
+              <label>Mobile</label>
+              <input id="studentMobile" type="text" readonly />
+            </div>
+            <div class="field full-width">
+              <label>Enrollment Number</label>
+              <input id="studentEnrollment" type="text" readonly />
+            </div>
+
+            <div class="field full-width">
+              <label for="course">Course</label>
+              <select id="course" required>
+                <option value="">Select course</option>
+                <option value="BTech Biotech">BTech Biotech</option>
+                <option value="BTech Foodtech">BTech Foodtech</option>
+                <option value="BSc Biotech">BSc Biotech</option>
+                <option value="BTech Bioinformatics - Section A">BTech Bioinformatics - Section A</option>
+                <option value="BTech Bioinformatics - Section B">BTech Bioinformatics - Section B</option>
+                <option value="MSc Biotech">MSc Biotech</option>
+                <option value="MSc Foodtech">MSc Foodtech</option>
+                <option value="MSc Bioinformatics">MSc Bioinformatics</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="paymentStatus">Payment Status</label>
+              <select id="paymentStatus">
+                <option value="Unpaid">Unpaid</option>
+                <option value="Paid">Paid</option>
+                <option value="Pending Verification">Pending Verification</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="amountPaid">Amount Paid</label>
+              <input id="amountPaid" type="number" min="0" step="1" value="450" />
+            </div>
+
+            <div class="field">
+              <label for="paidBy">Who Paid the Amount?</label>
+              <select id="paidBy">
+                <option value="Student">Student</option>
+                <option value="Father">Father</option>
+                <option value="Mother">Mother</option>
+                <option value="Friend">Friend</option>
+                <option value="Brother">Brother</option>
+                <option value="Sister">Sister</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="paidByName">Paid By Name</label>
+              <input id="paidByName" type="text" placeholder="Enter payer name" />
+            </div>
+
+            <div class="field full-width">
+              <label for="paymentMode">Payment Mode</label>
+              <div class="mode-options">
+                <label class="mode-option">
+                  <input type="radio" name="paymentMode" value="Cash" />
+                  <span>💵 CASH</span>
+                </label>
+                <label class="mode-option">
+                  <input type="radio" name="paymentMode" value="Online" />
+                  <span>💳 ONLINE</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="paymentDate">Payment Date</label>
+              <input id="paymentDate" type="date" readonly />
+            </div>
+
+            <div class="field">
+              <label for="paymentTime">Payment Time</label>
+              <input id="paymentTime" type="time" readonly />
+            </div>
+
+            <div class="field cash-field">
+              <label for="cashReceivedBy">Cash Received By</label>
+              <input id="cashReceivedBy" type="text" placeholder="Cash collector name" />
+            </div>
+            <div class="field cash-field">
+              <label for="cashPaymentDate">Cash Payment Date</label>
+              <input id="cashPaymentDate" type="date" readonly />
+            </div>
+
+            <div class="field full-width cash-field">
+              <label class="check-option">
+                <input id="confirmCashReceived" type="checkbox" />
+                <span>Confirm Cash Received</span>
+              </label>
+              <label for="cashRemarks">Cash Remarks (optional)</label>
+              <textarea id="cashRemarks" rows="2" placeholder="Cash received directly at college"></textarea>
+            </div>
+
+            <div class="field online-field hidden">
+              <label for="verificationStatus">Verification Status</label>
+              <select id="verificationStatus">
+                <option value="Pending Verification">Pending Verification</option>
+                <option value="Verified">Verified</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+
+            <div class="field online-field hidden">
+              <label for="onlineApp">Online Payment App</label>
+              <select id="onlineApp">
+                <option value="">Select app (optional)</option>
+                <option>Google Pay</option>
+                <option>PhonePe</option>
+                <option>Paytm</option>
+                <option>Bank Transfer</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div class="field online-field hidden">
+              <label for="screenshot">Payment Screenshot</label>
+              <input id="screenshot" type="file" accept="image/*" />
+              <span id="screenshotName" class="field-hint"></span>
+            </div>
+
+            <div class="field">
+              <label for="verifiedAt">Verified At</label>
+              <input id="verifiedAt" type="text" readonly placeholder="Not verified yet" />
+            </div>
+
+            <div class="field full-width">
+              <label for="remarks">Remarks</label>
+              <textarea id="remarks" rows="3" placeholder="Add notes if required"></textarea>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="secondary-btn" type="button" data-close="true">Cancel</button>
+            <button id="savePaymentButton" class="primary-btn" type="submit">SAVE PAYMENT</button>
+          </div>
+        </form>
+        <section class="history-section">
+          <h3>PAYMENT HISTORY</h3>
+          <div id="paymentHistory" class="history-list">No previous payment updates.</div>
+        </section>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+    <script src="script.js?v=20261007-2"></script>
+  </body>
+</html>
